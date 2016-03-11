@@ -1,12 +1,13 @@
 source 'https://rubygems.org/'
 
-gem 'sinatra'
-gem 'sinatra-contrib', require: 'sinatra/contrib'
-gem 'thin'
-
 gem 'dotenv'
 
-gem 'faraday'
+gem 'sinatra'
+gem 'sinatra-contrib', require: 'sinatra/contrib'
+gem 'sinatra-param',   require: 'sinatra/param'
+gem 'sinatra-session', require: 'sinatra/session'
+
+gem 'thin'
 
 group :development do
   gem 'dotenv'

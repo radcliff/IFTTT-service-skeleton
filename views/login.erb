@@ -1,0 +1,19 @@
+<div class="container" style="margin-top:15%;">
+  <h1>Log in</h1>
+
+  <form method="POST" action="/login">
+    <div class="row">
+      <div class="six columns">
+        <label for="username">Username</label>
+        <input type="text" name="username" class="u-full-width" >
+
+        <label for="password">Password</label>
+        <input type="password" name="password" class="u-full-width">
+      </div>
+    </div>
+    <input type="submit" value="Log in" class="button-primary">
+    <% if @redirect_path %>
+      <input type="hidden" name="redirect" value='<%= @redirect_path %>'>
+    <% end %>
+  </form>
+</div>
