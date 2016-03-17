@@ -1,3 +1,5 @@
+require 'json'
+
 class Service < Sinatra::Base
   register Sinatra::Contrib
   register Sinatra::Session
@@ -9,6 +11,7 @@ class Service < Sinatra::Base
     set :IFTTT_CLIENT_ID,     ENV['IFTTT_CLIENT_ID']
     set :IFTTT_CLIENT_SECRET, ENV['IFTTT_CLIENT_SECRET']
     set :IFTTT_REDIRECT_URI,  ENV['IFTTT_REDIRECT_URI']
+    set :IFTTT_SERVICE_ID,    ENV['IFTTT_SERVICE_ID']
 
     # set :session_name,   ''  # TODO: customize session cookie name
     set :session_secret, ENV['SESSION_SECRET']
@@ -39,13 +42,59 @@ class Service < Sinatra::Base
       #   error_response "Invalid access token!"
       # end
     end
+
+    def get_applets
+      url = "https://api.ifttt.com/v1/services/#{settings.IFTTT_SERVICE_ID}/applets"
+
+      uri = URI.parse(url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+
+      access_token = ''  # TODO: lookup current user access token 
+
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request['Authorization'] = "Bearer #{access_token}"
+      request['Accept'] = 'application/json'
+
+      response = http.request(request)
+
+      @redirect_uri = ''  # TODO: redirect uri should match applet configuration
+      @applets = JSON.parse(response.body)['data']
+    end
   end
 
   get '/' do
-    redirect '/login' unless session?
+    access_denied_url = "https://ifttt.com/channels/#{settings.IFTTT_CHANNEL_SLUG}/authorize?error=access_denied"
+    
+    redirect to(access_denied_url) if params[:error] == 'access_denied'
+    redirect to('/login') unless session?
+
+    @applets = get_applets
 
     @username = session[:username]
     erb :index
+  end
+
+  get '/applets/disable' do
+    param :applet_id, String, required: true
+
+    applet_id = params[:applet_id]
+
+    url = "https://api.ifttt.com/v1/applets/#{applet_id}/disable"
+
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true  
+
+    access_token = ''  # TODO: lookup current user access token 
+
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request['Authorization'] = "Bearer #{access_token}"
+    request['Accept'] = 'application/json'
+
+    http.request(request)
+
+    redirect to('/')
   end
 
   namespace '/login' do

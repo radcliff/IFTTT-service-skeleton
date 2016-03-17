@@ -5,12 +5,23 @@
     <div class="twelve columns">
       <table class="u-full-width">
         <tbody>
-          <tr>
-            <td>Do the thing in the background</td>
-            <td></td>
-            <td></td>
-            <td><a href="https://ifttt.com/applets/authorize?applet_id=&redirect_uri=" class="button button-primary">Enable</a></td>
-          </tr>
+          <% @applets.each do |applet| %>
+            <tr>
+              <td>
+                <strong><%= applet['name'] %></strong>
+                <div><%= applet['description'] %></div>
+              </td>
+              <td>
+                <% if applet['status'] == 'disabled' %>
+                  <a href="https://ifttt.com/applets/authorize?applet_id=<%= applet['id'] %>&redirect_uri=<%= @redirect_uri %>" class="button button-primary">
+                  Enable</a>
+                <% else %>
+                  <a href="/applets/disable?applet_id='<%= applet['id'] %>'" class="button">
+                  Disable</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
         </tbody>
       </table>
     </div>
