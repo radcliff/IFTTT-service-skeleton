@@ -23,6 +23,22 @@ class Service < Sinatra::Base
       default_headers
       halt 401, json( { errors: [ { message: message } ] } )
     end
+
+    def valid_channel_key
+      unless env['HTTP_IFTTT_CHANNEL_KEY'] == settings.IFTTT_CHANNEL_KEY
+        error_response "Invalid IFTTT Channel Key!"
+      end
+    end
+
+    def valid_access_token
+      authorization = request.env['HTTP_AUTHORIZATION']
+      bearer_token = /Bearer (.*)\z/i.match(authorization).captures[0]
+
+      # # TODO: verify access token is valid
+      # unless user = lookup_user_with_access_token bearer_token
+      #   error_response "Invalid access token!"
+      # end
+    end
   end
 
   get '/' do
@@ -117,20 +133,12 @@ class Service < Sinatra::Base
       end
 
       get '/status' do
-        unless env['HTTP_IFTTT_CHANNEL_KEY'] == settings.IFTTT_CHANNEL_KEY
-          error_response "Invalid IFTTT Channel Key!"
-        end
+        valid_channel_key
         status 200
       end
 
       get '/user/info' do
-        authorization = request.env['HTTP_AUTHORIZATION']
-        bearer_token = /Bearer (.*)\z/i.match(authorization).captures[0]
-
-        # # TODO: verify access token is valid
-        # unless user = lookup_user_with_access_token token
-        #   error_response "Invalid access token!"
-        # end
+        valid_access_token
 
         data = {
           id:   '',  # identification to display to the user
@@ -141,6 +149,34 @@ class Service < Sinatra::Base
         default_headers
         json data: data
       end
+
+      namespace '/webhooks' do
+        post '/applet_enabled' do
+          valid_access_token
+
+          param :user_id,    String,  required: true
+          param :applet_id,  String,  required: true
+          param :enabled_at, Integer, required: true
+          param :token,      String,  required: true
+
+          # TODO: persist user access token
+
+          status 200
+        end
+
+        post '/applet_disabled' do
+          valid_channel_key
+
+          param :user_id,     String,  required: true
+          param :applet_id,   String,  required: true
+          param :disabled_at, Integer, required: true
+
+          # TODO: destroy user access token & channel connection
+
+          status 200
+        end
+      end
+
     end
   end
 
